@@ -65,7 +65,7 @@ else:
 # ---------------------------
 # Query settings
 # ---------------------------
-st.subheader("⚙️ Filters")
+st.subheader(" Filters")
 
 col1, col2 = st.columns(2)
 
