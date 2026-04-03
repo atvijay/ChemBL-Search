@@ -8,7 +8,7 @@ from chembl_webresource_client.new_client import new_client
 # ---------------------------
 st.set_page_config(page_title="ChEMBL Substructure Search", layout="wide")
 
-st.title(" ChEMBL Substructure Search App")
+st.title(" ChEMBL Substructure Search ")
 
 # ---------------------------
 # Input: SMARTS
