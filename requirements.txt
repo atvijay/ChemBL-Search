@@ -1,0 +1,5 @@
+streamlit>=1.30.0
+pandas
+chembl_webresource_client
+rdkit
+requests-cache
