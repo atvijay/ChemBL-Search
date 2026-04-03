@@ -8,7 +8,7 @@ from chembl_webresource_client.new_client import new_client
 # ---------------------------
 st.set_page_config(page_title="ChEMBL Substructure Search", layout="wide")
 
-st.title("🔬 ChEMBL Substructure Search App")
+st.title(" ChEMBL Substructure Search App")
 
 # ---------------------------
 # Input: SMARTS
@@ -24,7 +24,7 @@ if smarts and query_mol is None:
 # ---------------------------
 # Target selection
 # ---------------------------
-st.subheader("🎯 Target Selection")
+st.subheader(" Target Selection")
 
 mode = st.radio("Select mode", ["By ChEMBL ID", "Search by name"])
 
@@ -85,7 +85,7 @@ with col2:
 # ---------------------------
 # Run button
 # ---------------------------
-if st.button("🚀 Run Search"):
+if st.button(" Run Search"):
 
     if not targets:
         st.warning("Please select at least one target")
@@ -144,7 +144,7 @@ if st.button("🚀 Run Search"):
     # ---------------------------
     # Output
     # ---------------------------
-    st.success(f"✅ Found {len(df)} matching compounds")
+    st.success(f" Found {len(df)} matching compounds")
 
     if not df.empty:
         st.dataframe(df, use_container_width=True)
@@ -152,7 +152,7 @@ if st.button("🚀 Run Search"):
         csv = df.to_csv(index=False).encode("utf-8")
 
         st.download_button(
-            "⬇️ Download CSV",
+            " Download CSV",
             csv,
             "chembl_results.csv",
             "text/csv"
