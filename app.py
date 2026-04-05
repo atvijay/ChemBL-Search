@@ -8,7 +8,18 @@ from chembl_webresource_client.new_client import new_client
 # ---------------------------
 st.set_page_config(page_title="ChEMBL Substructure Search", layout="wide")
 
-st.title("🔬 ChEMBL Substructure Search App")
+st.title(" ChEMBL Substructure Search App")
+
+# ---------------------------
+# Cached target name fetcher (BONUS IMPROVEMENT)
+# ---------------------------
+@st.cache_data
+def get_target_name(tid):
+    try:
+        res = new_client.target.get(tid)
+        return res.get("pref_name") or tid
+    except:
+        return tid
 
 # ---------------------------
 # Input: SMARTS
@@ -24,7 +35,7 @@ if smarts and query_mol is None:
 # ---------------------------
 # Target selection
 # ---------------------------
-st.subheader("🎯 Target Selection")
+st.subheader(" Target Selection")
 
 mode = st.radio("Select mode", ["By ChEMBL ID", "Search by name"])
 
@@ -36,12 +47,17 @@ if mode == "By ChEMBL ID":
         "CHEMBL3473, CHEMBL3217397"
     )
 
-    # ✅ FIXED: unique readable labels
-    targets = {
-        f"Target_{i+1} ({tid.strip()})": tid.strip()
-        for i, tid in enumerate(target_input.split(","))
-        if tid.strip()
-    }
+    targets = {}
+
+    for tid in target_input.split(","):
+        tid = tid.strip()
+        if not tid:
+            continue
+
+        name = get_target_name(tid)
+
+        #  Clean label (just protein name)
+        targets[name] = tid
 
 else:
     target_client = new_client.target
@@ -60,12 +76,16 @@ else:
         }
 
         selected = st.multiselect("Select targets", list(options.keys()))
-        targets = {s: options[s] for s in selected}
+
+        # Extract clean names
+        for s in selected:
+            name = s.split(" (")[0]
+            targets[name] = options[s]
 
 # ---------------------------
 # Query settings
 # ---------------------------
-st.subheader("⚙️ Filters")
+st.subheader(" Filters")
 
 col1, col2 = st.columns(2)
 
@@ -85,7 +105,7 @@ with col2:
 # ---------------------------
 # Run button
 # ---------------------------
-if st.button("🚀 Run Search"):
+if st.button(" Run Search"):
 
     if not targets:
         st.warning("Please select at least one target")
@@ -104,7 +124,7 @@ if st.button("🚀 Run Search"):
     # ---------------------------
     for idx, (target_name, target_id) in enumerate(targets.items()):
 
-        st.write(f"🔎 Processing {target_name}")
+        st.write(f" Processing {target_name} ({target_id})")
 
         fetched_count = 0
         matched_count = 0
@@ -149,12 +169,12 @@ if st.button("🚀 Run Search"):
                     })
 
         except Exception as e:
-            st.error(f"❌ Error with {target_name}: {str(e)}")
+            st.error(f" Error with {target_name}: {str(e)}")
             continue
 
-        # ✅ Debug summary per target
+        # Debug summary
         st.write(
-            f"✅ {target_name}: fetched {fetched_count} records | matched {matched_count}"
+            f" {target_name}: fetched {fetched_count} | matched {matched_count}"
         )
 
         progress.progress((idx + 1) / total_targets)
@@ -164,7 +184,6 @@ if st.button("🚀 Run Search"):
     # ---------------------------
     df = pd.DataFrame(results)
 
-    # Optional sorting
     if not df.empty:
         df["standard_value"] = pd.to_numeric(df["standard_value"], errors="coerce")
         df = df.sort_values("standard_value")
@@ -172,9 +191,8 @@ if st.button("🚀 Run Search"):
     # ---------------------------
     # Output
     # ---------------------------
-    st.success(f"✅ Total matches: {len(df)}")
+    st.success(f" Total matches: {len(df)}")
 
-    # ✅ Show distribution by target
     if not df.empty:
         st.write("### Results per target")
         st.write(df.groupby("target_name").size())
@@ -184,7 +202,7 @@ if st.button("🚀 Run Search"):
         csv = df.to_csv(index=False).encode("utf-8")
 
         st.download_button(
-            "⬇️ Download CSV",
+            " Download CSV",
             csv,
             "chembl_results.csv",
             "text/csv"
