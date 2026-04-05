@@ -103,7 +103,9 @@ MIT License
 ChEMBL
 RDKit
 Streamlit
+
 👤 Author
 
 Vijayendar Yedulla
+
 Medicinal Chemist 
