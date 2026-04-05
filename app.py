@@ -8,7 +8,7 @@ from chembl_webresource_client.new_client import new_client
 # ---------------------------
 st.set_page_config(page_title="ChEMBL Substructure Search", layout="wide")
 
-st.title(" ChEMBL Substructure Search ")
+st.title("🔬 ChEMBL Substructure Search App")
 
 # ---------------------------
 # Input: SMARTS
@@ -24,7 +24,7 @@ if smarts and query_mol is None:
 # ---------------------------
 # Target selection
 # ---------------------------
-st.subheader(" Target Selection")
+st.subheader("🎯 Target Selection")
 
 mode = st.radio("Select mode", ["By ChEMBL ID", "Search by name"])
 
@@ -35,9 +35,11 @@ if mode == "By ChEMBL ID":
         "Enter target ChEMBL IDs (comma separated)",
         "CHEMBL3473, CHEMBL3217397"
     )
+
+    # ✅ FIXED: unique readable labels
     targets = {
-        tid.strip(): tid.strip()
-        for tid in target_input.split(",")
+        f"Target_{i+1} ({tid.strip()})": tid.strip()
+        for i, tid in enumerate(target_input.split(","))
         if tid.strip()
     }
 
@@ -49,7 +51,6 @@ else:
     if search_term:
         results = target_client.search(search_term)
 
-        # Filter clean targets
         options = {
             f"{r['pref_name']} ({r['target_chembl_id']})": r['target_chembl_id']
             for r in results
@@ -59,13 +60,12 @@ else:
         }
 
         selected = st.multiselect("Select targets", list(options.keys()))
-
         targets = {s: options[s] for s in selected}
 
 # ---------------------------
 # Query settings
 # ---------------------------
-st.subheader(" Filters")
+st.subheader("⚙️ Filters")
 
 col1, col2 = st.columns(2)
 
@@ -85,14 +85,13 @@ with col2:
 # ---------------------------
 # Run button
 # ---------------------------
-if st.button(" Run Search"):
+if st.button("🚀 Run Search"):
 
     if not targets:
         st.warning("Please select at least one target")
         st.stop()
 
     activity = new_client.activity
-
     results = []
 
     st.info("Fetching data from ChEMBL...")
@@ -100,59 +99,92 @@ if st.button(" Run Search"):
     progress = st.progress(0)
     total_targets = len(targets)
 
+    # ---------------------------
+    # Loop through targets
+    # ---------------------------
     for idx, (target_name, target_id) in enumerate(targets.items()):
 
-        st.write(f"Processing {target_name}...")
+        st.write(f"🔎 Processing {target_name}")
 
-        acts = activity.filter(
-            target_chembl_id=target_id,
-            standard_type__in=activity_types,
-            assay_type="B",
-            standard_value__lte=max_value
-        ).only([
-            "molecule_chembl_id",
-            "canonical_smiles",
-            "standard_type",
-            "standard_value",
-            "standard_units"
-        ])
+        fetched_count = 0
+        matched_count = 0
 
-        for i, a in enumerate(acts):
+        try:
+            acts = activity.filter(
+                target_chembl_id=target_id,
+                standard_type__in=activity_types,
+                assay_type="B",
+                standard_value__lte=max_value
+            ).only([
+                "molecule_chembl_id",
+                "canonical_smiles",
+                "standard_type",
+                "standard_value",
+                "standard_units"
+            ])
 
-            if i % 500 == 0:
-                st.write(f"{target_name}: processed {i} records")
+            for i, a in enumerate(acts):
+                fetched_count += 1
 
-            smiles = a.get("canonical_smiles")
-            if not smiles:
-                continue
+                if i % 500 == 0 and i > 0:
+                    st.write(f"{target_name}: processed {i} records")
 
-            mol = Chem.MolFromSmiles(smiles)
-            if mol and mol.HasSubstructMatch(query_mol):
-                results.append({
-                    "target": target_name,
-                    "molecule_chembl_id": a["molecule_chembl_id"],
-                    "smiles": smiles,
-                    "standard_type": a["standard_type"],
-                    "standard_value": a["standard_value"],
-                    "standard_units": a["standard_units"],
-                })
+                smiles = a.get("canonical_smiles")
+                if not smiles:
+                    continue
+
+                mol = Chem.MolFromSmiles(smiles)
+                if mol and mol.HasSubstructMatch(query_mol):
+
+                    matched_count += 1
+
+                    results.append({
+                        "target_name": target_name,
+                        "target_id": target_id,
+                        "molecule_chembl_id": a.get("molecule_chembl_id"),
+                        "smiles": smiles,
+                        "standard_type": a.get("standard_type"),
+                        "standard_value": a.get("standard_value"),
+                        "standard_units": a.get("standard_units"),
+                    })
+
+        except Exception as e:
+            st.error(f"❌ Error with {target_name}: {str(e)}")
+            continue
+
+        # ✅ Debug summary per target
+        st.write(
+            f"✅ {target_name}: fetched {fetched_count} records | matched {matched_count}"
+        )
 
         progress.progress((idx + 1) / total_targets)
 
+    # ---------------------------
+    # DataFrame
+    # ---------------------------
     df = pd.DataFrame(results)
+
+    # Optional sorting
+    if not df.empty:
+        df["standard_value"] = pd.to_numeric(df["standard_value"], errors="coerce")
+        df = df.sort_values("standard_value")
 
     # ---------------------------
     # Output
     # ---------------------------
-    st.success(f" Found {len(df)} matching compounds")
+    st.success(f"✅ Total matches: {len(df)}")
 
+    # ✅ Show distribution by target
     if not df.empty:
+        st.write("### Results per target")
+        st.write(df.groupby("target_name").size())
+
         st.dataframe(df, use_container_width=True)
 
         csv = df.to_csv(index=False).encode("utf-8")
 
         st.download_button(
-            " Download CSV",
+            "⬇️ Download CSV",
             csv,
             "chembl_results.csv",
             "text/csv"
