@@ -5,16 +5,21 @@ This tool enables medicinal chemists to quickly identify compounds containing a 
 
 🚀 Features
 Substructure search (SMARTS-based) using RDKit
+
 🎯 Multi-target querying
 Enter ChEMBL target IDs (e.g., PIM1, PIM3)
 Or search targets by name
+
 ⚙️ Activity filtering
 IC50 / EC50 selection
 Custom activity cutoff (nM)
+
 📊 Live progress tracking
 Records fetched and matched per target
+
 🧠 Automatic target name resolution
 Converts ChEMBL IDs → protein names (cached for speed)
+
 📁 Downloadable results (CSV)
 📈 Per-target result summary
 
@@ -26,6 +31,7 @@ Streamlit (UI)
 RDKit (substructure matching)
 ChEMBL Web Resource Client (data access)
 Pandas (data handling)
+
 📦 Installation
 
 Clone the repository:
@@ -39,8 +45,8 @@ conda create -n chembl_env python=3.10
 conda activate chembl_env
 
 Install dependencies:
-
 pip install -r requirements.txt
+
 ▶️ Running the App
 streamlit run app.py
 
@@ -60,6 +66,7 @@ Option B: Search by name and select from list
 3. Filters
 Activity type: IC50 / EC50
 Max activity value (nM)
+
 📊 Output
 
 The app returns a table with:
@@ -79,10 +86,12 @@ Results can be downloaded as a CSV file.
 Large targets may take several minutes (thousands of compounds)
 Progress is shown during execution
 Target names are cached to reduce API calls
+
 ⚠️ Known Limitations
 Depends on ChEMBL API availability (may occasionally return 500 errors)
 Substructure matching is done locally (can be slow for large datasets)
 Only binding assays (assay_type = "B") are included
+
 🔮 Future Improvements
 Add pIC50 / pEC50 calculation
 Include UniProt ID / gene symbols
@@ -90,13 +99,12 @@ Structure visualization (RDKit images)
 Similarity search (Tanimoto)
 Scaffold clustering / SAR analysis
 Local caching of ChEMBL data
-🤝 Contributing
 
+🤝 Contributing
 Contributions are welcome!
 Feel free to open issues or submit pull requests.
 
 📜 License
-
 MIT License
 
 🙌 Acknowledgements
