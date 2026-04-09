@@ -24,12 +24,46 @@ def get_target_name(tid):
 # ---------------------------
 # SMARTS input
 # ---------------------------
-smarts = st.text_input("Enter SMARTS / substructure", "c1ccccc1")
-query_mol = Chem.MolFromSmarts(smarts)
+st.subheader("🧪 Query Structure")
 
-if smarts and query_mol is None:
-    st.error("Invalid SMARTS string")
-    st.stop()
+input_mode = st.radio(
+    "Choose input method",
+    ["SMILES/SMARTS", "Draw structure"]
+)
+
+query_mol = None
+
+# ---------------------------
+# Option 1: Text input
+# ---------------------------
+if input_mode == "SMILES/SMARTS":
+    smarts = st.text_input("Enter SMARTS / SMILES", "c1ccccc1")
+
+    query_mol = Chem.MolFromSmarts(smarts)
+
+    if smarts and query_mol is None:
+        st.error("Invalid SMARTS/SMILES")
+        st.stop()
+
+# ---------------------------
+# Option 2: Drawing editor
+# ---------------------------
+else:
+    molfile = st_ketcher(height=400)
+
+    if molfile:
+        try:
+            mol = Chem.MolFromMolBlock(molfile)
+            if mol:
+                query_mol = mol
+                smiles = Chem.MolToSmiles(mol)
+                st.success(f"Extracted SMILES: {smiles}")
+        except:
+            st.error("Error reading drawn structure")
+
+    if query_mol is None:
+        st.info("Draw a structure to proceed")
+        st.stop()
 
 # ---------------------------
 # Target selection
