@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 from rdkit import Chem
 from chembl_webresource_client.new_client import new_client
 
@@ -8,6 +9,17 @@ from chembl_webresource_client.new_client import new_client
 # ---------------------------
 st.set_page_config(page_title="ChEMBL Substructure Search", layout="wide")
 st.title("🔬 ChEMBL Substructure Search App")
+
+# ---------------------------
+# Cached target name fetcher
+# ---------------------------
+@st.cache_data
+def get_target_name(tid):
+    try:
+        res = new_client.target.get(tid)
+        return res.get("pref_name") or tid
+    except:
+        return tid
 
 # ---------------------------
 # SMARTS input
@@ -25,8 +37,8 @@ if smarts and query_mol is None:
 st.subheader("🎯 Target Selection")
 
 mode = st.radio(
-    "Choose input method",
-    ["Manual (multi-ID)", "Auto (search & expand)"]
+    "Select mode",
+    ["Manual (multi-ID)", "Search & auto-expand"]
 )
 
 targets = {}
@@ -48,6 +60,7 @@ CCR3: CHEMBL240"""
 
         name, ids = line.split(":")
         name = name.strip()
+
         id_list = [i.strip() for i in ids.split(",") if i.strip()]
 
         if id_list:
@@ -60,7 +73,6 @@ else:
     target_client = new_client.target
 
     search_term = st.text_input("Search target (e.g. CCR5)")
-
     include_family = st.checkbox("Include PROTEIN FAMILY", value=True)
 
     if search_term:
@@ -85,7 +97,6 @@ else:
 
                 grouped[name].append(r["target_chembl_id"])
 
-        # UI selection
         options = {
             f"{k} ({len(v)} IDs)": (k, v)
             for k, v in grouped.items()
@@ -118,6 +129,18 @@ with col2:
     )
 
 # ---------------------------
+# SAR options
+# ---------------------------
+st.subheader("🧬 SAR Options")
+
+use_pactivity = st.checkbox("Convert to pActivity (-log10 M)", value=True)
+
+aggregation_method = st.selectbox(
+    "Aggregation method",
+    ["min", "mean", "median"]
+)
+
+# ---------------------------
 # Run search
 # ---------------------------
 if st.button("🚀 Run Search"):
@@ -134,6 +157,9 @@ if st.button("🚀 Run Search"):
 
     total_targets = len(targets)
 
+    # ---------------------------
+    # Loop through targets
+    # ---------------------------
     for idx, (target_name, target_ids) in enumerate(targets.items()):
 
         st.write(f"🔎 Processing {target_name}")
@@ -189,9 +215,7 @@ if st.button("🚀 Run Search"):
                 st.warning(f"Error with {target_id}")
                 continue
 
-        st.write(
-            f"✅ {target_name}: fetched {fetched_count} | matched {matched_count}"
-        )
+        st.write(f"✅ {target_name}: fetched {fetched_count} | matched {matched_count}")
 
         progress.progress((idx + 1) / total_targets)
 
@@ -200,34 +224,66 @@ if st.button("🚀 Run Search"):
     # ---------------------------
     df = pd.DataFrame(results)
 
-    if not df.empty:
-        df["standard_value"] = pd.to_numeric(df["standard_value"], errors="coerce")
+    if df.empty:
+        st.warning("No matches found")
+        st.stop()
 
-        # remove duplicates across multiple IDs
-        df = df.drop_duplicates(
-            subset=["molecule_chembl_id", "target_name", "standard_value"]
-        )
+    df["standard_value"] = pd.to_numeric(df["standard_value"], errors="coerce")
 
-        df = df.sort_values("standard_value")
+    # Remove duplicates across multiple IDs
+    df = df.drop_duplicates(
+        subset=["molecule_chembl_id", "target_name", "standard_value"]
+    )
 
     # ---------------------------
-    # Output
+    # pActivity conversion
+    # ---------------------------
+    if use_pactivity:
+        df["activity"] = -np.log10(df["standard_value"] * 1e-9)
+    else:
+        df["activity"] = df["standard_value"]
+
+    # ---------------------------
+    # Output: long format
     # ---------------------------
     st.success(f"✅ Total matches: {len(df)}")
 
-    if not df.empty:
-        st.write("### Results per target")
-        st.write(df.groupby("target_name").size())
+    st.write("### Results per target")
+    st.write(df.groupby("target_name").size())
 
-        st.dataframe(df, use_container_width=True)
+    st.write("### 📋 Raw Data")
+    st.dataframe(df, use_container_width=True)
 
-        csv = df.to_csv(index=False).encode("utf-8")
+    csv = df.to_csv(index=False).encode("utf-8")
 
-        st.download_button(
-            "⬇️ Download CSV",
-            csv,
-            "chembl_results.csv",
-            "text/csv"
-        )
-    else:
-        st.warning("No matches found")
+    st.download_button(
+        "⬇️ Download Raw CSV",
+        csv,
+        "chembl_results.csv",
+        "text/csv"
+    )
+
+    # ---------------------------
+    # SAR MATRIX
+    # ---------------------------
+    st.write("## 🧬 SAR Matrix")
+
+    sar_df = df.pivot_table(
+        index=["smiles", "molecule_chembl_id"],
+        columns="target_name",
+        values="activity",
+        aggfunc=aggregation_method
+    ).reset_index()
+
+    sar_df.columns.name = None
+
+    st.dataframe(sar_df, use_container_width=True)
+
+    csv_sar = sar_df.to_csv(index=False).encode("utf-8")
+
+    st.download_button(
+        "⬇️ Download SAR Matrix",
+        csv_sar,
+        "sar_matrix.csv",
+        "text/csv"
+    )
