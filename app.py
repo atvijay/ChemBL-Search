@@ -168,7 +168,7 @@ with col2:
 # ---------------------------
 st.subheader("🧬 SAR Options")
 
-use_pactivity = st.checkbox("Convert to pActivity (-log10 M)", value=True)
+use_pactivity = st.checkbox("Convert to pActivity (PIC50)", value=True)
 
 aggregation_method = st.selectbox(
     "Aggregation method",
