@@ -25,7 +25,7 @@ def get_target_name(tid):
 # ---------------------------
 # SMARTS input
 # ---------------------------
-st.subheader("🧪 Query Structure")
+st.subheader("Query Structure")
 
 input_mode = st.radio(
     "Choose input method",
@@ -69,7 +69,7 @@ else:
 # ---------------------------
 # Target selection
 # ---------------------------
-st.subheader("🎯 Target Selection")
+st.subheader("Target Selection")
 
 mode = st.radio(
     "Select mode",
@@ -164,7 +164,7 @@ with col2:
     )
 
 # ---------------------------
-# SAR options
+# SAR Format
 # ---------------------------
 st.subheader("🧬 SAR Options")
 
@@ -299,9 +299,9 @@ if st.button("🚀 Run Search"):
     )
 
     # ---------------------------
-    # SAR MATRIX
+    # SAR Format
     # ---------------------------
-    st.write("## 🧬 SAR Matrix")
+    st.write("## 🧬 SAR Format")
 
     sar_df = df.pivot_table(
         index=["smiles", "molecule_chembl_id"],
@@ -317,8 +317,8 @@ if st.button("🚀 Run Search"):
     csv_sar = sar_df.to_csv(index=False).encode("utf-8")
 
     st.download_button(
-        "⬇️ Download SAR Matrix",
+        "⬇️ Download SAR Format",
         csv_sar,
-        "sar_matrix.csv",
+        "sar_format.csv",
         "text/csv"
     )
