@@ -146,7 +146,7 @@ else:
 # ---------------------------
 # Filters
 # ---------------------------
-st.subheader("⚙️ Filters")
+st.subheader("Filters")
 
 col1, col2 = st.columns(2)
 
@@ -166,7 +166,7 @@ with col2:
 # ---------------------------
 # SAR Format
 # ---------------------------
-st.subheader("🧬 SAR Options")
+st.subheader("SAR Options")
 
 use_pactivity = st.checkbox("Convert to pActivity (PIC50)", value=True)
 
@@ -178,7 +178,7 @@ aggregation_method = st.selectbox(
 # ---------------------------
 # Run search
 # ---------------------------
-if st.button("🚀 Run Search"):
+if st.button("Run Search"):
 
     if not targets:
         st.warning("Please select at least one target")
@@ -301,7 +301,7 @@ if st.button("🚀 Run Search"):
     # ---------------------------
     # SAR Format
     # ---------------------------
-    st.write("## 🧬 SAR Format")
+    st.write("## SAR Format")
 
     sar_df = df.pivot_table(
         index=["smiles", "molecule_chembl_id"],
