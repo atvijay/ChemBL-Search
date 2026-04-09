@@ -50,8 +50,8 @@ if mode == "Manual (multi-ID)":
 
     target_text = st.text_area(
         "Enter targets and ChEMBL IDs (one per line)",
-        """CCR5: CHEMBL3473, CHEMBL3217397
-CCR3: CHEMBL240"""
+        """protein1: CHEMBL1111, CHEMBL11111
+protein2: CHEMBL2222"""
     )
 
     for line in target_text.split("\n"):
@@ -72,7 +72,7 @@ CCR3: CHEMBL240"""
 else:
     target_client = new_client.target
 
-    search_term = st.text_input("Search target (e.g. CCR5)")
+    search_term = st.text_input("Search target")
     include_family = st.checkbox("Include PROTEIN FAMILY", value=True)
 
     if search_term:
