@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit_ketcher import st_ketcher
 import pandas as pd
 import numpy as np
 from rdkit import Chem
