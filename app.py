@@ -153,8 +153,8 @@ col1, col2 = st.columns(2)
 with col1:
     activity_types = st.multiselect(
         "Activity types",
-        ["IC50", "EC50"],
-        default=["IC50", "EC50"]
+        ["IC50", "EC50", "Kd"],
+        default=["IC50", "EC50", "Kd"]
     )
 
 with col2:
